@@ -172,70 +172,109 @@ function setupEvents() {
 
 async function loadData() {
 
-  /*
-    Until the Google Apps Script URL
-    is added, use demo data.
-  */
-
+  // If API_URL is empty, use demo data.
   if (!API_URL) {
-
     jobs = [...demoJobs];
-
     render();
-
     return;
   }
 
-
   try {
 
-    const response =
-      await fetch(
-        `${API_URL}?action=getAll`,
-        {
-          cache: "no-store"
-        }
-      );
+    const data = await getGoogleSheetData();
 
-
-    if (!response.ok) {
-
-      throw new Error(
-        `HTTP ${response.status}`
-      );
-
-    }
-
-
-    const data =
-      await response.json();
-
-
-    jobs =
-      Array.isArray(data.jobs)
-        ? data.jobs
-        : [];
-
+    jobs = Array.isArray(data.jobs)
+      ? data.jobs
+      : [];
 
     render();
 
-  }
-
-  catch (error) {
+  } catch (error) {
 
     console.error(
       "Google Sheets connection failed:",
       error
     );
 
-
-    jobs =
-      [...demoJobs];
-
+    // Don't show demo data anymore.
+    // Show the actual connection error instead.
+    jobs = [];
 
     render();
 
   }
+}
+function getGoogleSheetData() {
+
+  return new Promise((resolve, reject) => {
+
+    const callbackName =
+      "googleSheetCallback_" +
+      Date.now();
+
+    const script =
+      document.createElement("script");
+
+    const timeout =
+      setTimeout(() => {
+
+        cleanup();
+
+        reject(
+          new Error(
+            "Google Sheets request timed out."
+          )
+        );
+
+      }, 10000);
+
+
+    window[callbackName] =
+      function(data) {
+
+        clearTimeout(timeout);
+
+        cleanup();
+
+        resolve(data);
+
+      };
+
+
+    function cleanup() {
+
+      delete window[callbackName];
+
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+
+    }
+
+
+    script.onerror =
+      function() {
+
+        clearTimeout(timeout);
+
+        cleanup();
+
+        reject(
+          new Error(
+            "Unable to connect to Apps Script."
+          )
+        );
+
+      };
+
+
+    script.src =
+      `${API_URL}?action=getAll&callback=${callbackName}`;
+
+
+    document.body.appendChild(script);
+
+  });
 
 }
 
