@@ -1,388 +1,131 @@
-/*
-  AGENT JOB TRACKER
+// =====================================================
+// AGENT JOB TRACKER
+// GOOGLE SHEETS CONNECTION
+// =====================================================
 
-  For now this uses demo data.
-
-  Later we will connect:
-  GitHub Pages
-       ↓
-  Google Apps Script
-       ↓
-  Google Sheets
-
-  When the Apps Script Web App is ready,
-  put its URL inside API_URL.
-*/
-
-
-const API_URL = "https://script.google.com/macros/s/AKfycby1A_PyCuH0-ZUq3Z70twUstxtTdx_V2GvmcWf2BXPkERSVZ_NzTi8CDfRQGc2B6s0-/exec/exec?action=getAll";
-
-
-/* =========================
-   DEMO DATA
-========================= */
-
-const demoJobs = [
-
-  {
-    jobName: "North Pole Survey",
-
-    agentName: "John Doe",
-
-    taskType:
-      "identification of poles and lines",
-
-    session: "S3",
-
-    slices: 25,
-
-    priority: "High",
-
-    status: "In Progress",
-
-    startTimestamp:
-      "2026-08-21T08:30:00",
-
-    finishTimestamp: "",
-
-    duration: ""
-  },
-
-
-  {
-    jobName:
-      "East Route Encroachment",
-
-    agentName: "Jane Smith",
-
-    taskType:
-      "encroachment",
-
-    session: "S2",
-
-    slices: 18,
-
-    priority: "Normal",
-
-    status: "Completed",
-
-    startTimestamp:
-      "2026-08-21T08:00:00",
-
-    finishTimestamp:
-      "2026-08-21T09:25:00",
-
-    duration:
-      "1h 25m"
-  },
-
-
-  {
-    jobName:
-      "Line Identification - Sector 4",
-
-    agentName: "Mark Reyes",
-
-    taskType:
-      "identification of poles and lines",
-
-    session: "S5",
-
-    slices: 31,
-
-    priority: "High",
-
-    status: "Not Started",
-
-    startTimestamp: "",
-
-    finishTimestamp: "",
-
-    duration: ""
-  }
-
-];
-
+const API_URL =
+  "https://script.google.com/macros/s/AKfycby1A_PyCuH0-ZUq3Z70twUstxtTdx_V2GvmcWf2BXPkERSVZ_NzTi8CDfRQGc2B6s0-/exec";
 
 let jobs = [];
 
 
-/* =========================
-   START APPLICATION
-========================= */
+// =====================================================
+// START
+// =====================================================
 
-document.addEventListener(
-  "DOMContentLoaded",
-  init
-);
-
-
-async function init() {
-
-  setupEvents();
-
-  await loadData();
-
-}
-
-
-/* =========================
-   EVENTS
-========================= */
-
-function setupEvents() {
+document.addEventListener("DOMContentLoaded", () => {
+  loadJobs();
 
   document
     .getElementById("searchInput")
-    .addEventListener(
-      "input",
-      render
-    );
-
+    .addEventListener("input", renderJobs);
 
   document
     .getElementById("statusFilter")
-    .addEventListener(
-      "change",
-      render
-    );
-
+    .addEventListener("change", renderJobs);
 
   document
     .getElementById("priorityFilter")
-    .addEventListener(
-      "change",
-      render
-    );
-
+    .addEventListener("change", renderJobs);
 
   document
     .getElementById("refreshBtn")
-    .addEventListener(
-      "click",
-      loadData
+    .addEventListener("click", loadJobs);
+});
+
+
+// =====================================================
+// LOAD GOOGLE SHEETS
+// =====================================================
+
+function loadJobs() {
+
+  if (
+    !API_URL ||
+    API_URL.includes("PASTE_YOUR")
+  ) {
+
+    showError(
+      "Apps Script URL has not been added to app.js."
     );
 
-}
-
-
-/* =========================
-   LOAD DATA
-========================= */
-
-async function loadData() {
-
-  // If API_URL is empty, use demo data.
-  if (!API_URL) {
-    jobs = [...demoJobs];
-    render();
     return;
   }
 
-  try {
 
-    const data = await getGoogleSheetData();
-
-    jobs = Array.isArray(data.jobs)
-      ? data.jobs
-      : [];
-
-    render();
-
-  } catch (error) {
-
-    console.error(
-      "Google Sheets connection failed:",
-      error
-    );
-
-    // Don't show demo data anymore.
-    // Show the actual connection error instead.
-    jobs = [];
-
-    render();
-
-  }
-}
-function getGoogleSheetData() {
-
-  return new Promise((resolve, reject) => {
-
-    const callbackName =
-      "googleSheetCallback_" +
-      Date.now();
-
-    const script =
-      document.createElement("script");
-
-    const timeout =
-      setTimeout(() => {
-
-        cleanup();
-
-        reject(
-          new Error(
-            "Google Sheets request timed out."
-          )
-        );
-
-      }, 10000);
+  const callbackName =
+    "sheetCallback_" + Date.now();
 
 
-    window[callbackName] =
-      function(data) {
-
-        clearTimeout(timeout);
-
-        cleanup();
-
-        resolve(data);
-
-      };
+  const script =
+    document.createElement("script");
 
 
-    function cleanup() {
+  window[callbackName] =
+    function(data) {
 
       delete window[callbackName];
 
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
-      }
-
-    }
-    
-    function doGet(e) {
-
-  try {
-
-    const action =
-      e &&
-      e.parameter &&
-      e.parameter.action
-        ? e.parameter.action
-        : "getAll";
+      script.remove();
 
 
-    let result;
+      if (
+        !data ||
+        data.success !== true
+      ) {
 
-
-    if (action === "getAll") {
-
-      result = {
-        success: true,
-        ...getAllData()
-      };
-
-    } else {
-
-      result = {
-        success: false,
-        message: "Unknown action."
-      };
-
-    }
-
-
-    const callback =
-      e &&
-      e.parameter &&
-      e.parameter.callback
-        ? e.parameter.callback
-        : "";
-
-
-    // JSONP response for GitHub Pages
-    if (callback) {
-
-      return ContentService
-
-        .createTextOutput(
-          `${callback}(${JSON.stringify(result)})`
-        )
-
-        .setMimeType(
-          ContentService.MimeType.JAVASCRIPT
+        showError(
+          "Apps Script returned an error."
         );
 
-    }
+        return;
+      }
 
 
-    // Normal JSON response
-    return jsonResponse(result);
+      jobs =
+        Array.isArray(data.jobs)
+          ? data.jobs
+          : [];
 
 
-  } catch (error) {
+      renderAll();
 
-    const result = {
-      success: false,
-      message: error.message
     };
 
 
-    const callback =
-      e &&
-      e.parameter &&
-      e.parameter.callback
-        ? e.parameter.callback
-        : "";
+  script.onerror =
+    function() {
+
+      delete window[callbackName];
+
+      script.remove();
 
 
-    if (callback) {
+      showError(
+        "Could not connect to Google Sheets."
+      );
 
-      return ContentService
-
-        .createTextOutput(
-          `${callback}(${JSON.stringify(result)})`
-        )
-
-        .setMimeType(
-          ContentService.MimeType.JAVASCRIPT
-        );
-
-    }
+    };
 
 
-    return jsonResponse(result);
+  script.src =
+    API_URL +
+    "?action=getAll&callback=" +
+    callbackName;
 
-  }
+
+  document.body.appendChild(script);
 
 }
 
 
-    script.onerror =
-      function() {
+// =====================================================
+// RENDER EVERYTHING
+// =====================================================
 
-        clearTimeout(timeout);
+function renderAll() {
 
-        cleanup();
-
-        reject(
-          new Error(
-            "Unable to connect to Apps Script."
-          )
-        );
-
-      };
-
-
-    script.src =
-      `${API_URL}?action=getAll&callback=${callbackName}`;
-
-
-    document.body.appendChild(script);
-
-  });
-
-}
-
-
-/* =========================
-   RENDER EVERYTHING
-========================= */
-
-function render() {
-
-  renderStatistics();
+  renderStats();
 
   renderJobs();
 
@@ -391,37 +134,40 @@ function render() {
 }
 
 
-/* =========================
-   STATISTICS
-========================= */
+// =====================================================
+// STATS
+// =====================================================
 
-function renderStatistics() {
+function renderStats() {
 
   const active =
     jobs.filter(
       job =>
-        normalize(job.status)
-        === "in progress"
+        String(job.status)
+          .toLowerCase() ===
+        "in progress"
     ).length;
 
 
   const completed =
     jobs.filter(
       job =>
-        normalize(job.status)
-        === "completed"
+        String(job.status)
+          .toLowerCase() ===
+        "completed"
     ).length;
 
 
-  const highPriority =
+  const high =
     jobs.filter(
       job =>
-        normalize(job.priority)
-        === "high"
+        String(job.priority)
+          .toLowerCase() ===
+        "high"
     ).length;
 
 
-  const totalSlices =
+  const slices =
     jobs.reduce(
       (total, job) =>
         total +
@@ -442,20 +188,20 @@ function renderStatistics() {
 
   document.getElementById(
     "highPriority"
-  ).textContent = highPriority;
+  ).textContent = high;
 
 
   document.getElementById(
     "totalSlices"
   ).textContent =
-    totalSlices.toLocaleString();
+    slices.toLocaleString();
 
 }
 
 
-/* =========================
-   JOB TABLE
-========================= */
+// =====================================================
+// JOB TABLE
+// =====================================================
 
 function renderJobs() {
 
@@ -465,7 +211,7 @@ function renderJobs() {
     );
 
 
-  const emptyState =
+  const empty =
     document.getElementById(
       "emptyState"
     );
@@ -477,8 +223,8 @@ function renderJobs() {
         "searchInput"
       )
       .value
-      .trim()
-      .toLowerCase();
+      .toLowerCase()
+      .trim();
 
 
   const status =
@@ -496,7 +242,7 @@ function renderJobs() {
   const filtered =
     jobs.filter(job => {
 
-      const searchable = [
+      const text = [
 
         job.jobName,
 
@@ -511,25 +257,25 @@ function renderJobs() {
         .toLowerCase();
 
 
-      const matchesSearch =
-        !search ||
-        searchable.includes(search);
-
-
-      const matchesStatus =
-        status === "all" ||
-        job.status === status;
-
-
-      const matchesPriority =
-        priority === "all" ||
-        job.priority === priority;
-
-
       return (
-        matchesSearch &&
-        matchesStatus &&
-        matchesPriority
+
+        (!search ||
+          text.includes(search))
+
+        &&
+
+        (
+          status === "all" ||
+          job.status === status
+        )
+
+        &&
+
+        (
+          priority === "all" ||
+          job.priority === priority
+        )
+
       );
 
     });
@@ -540,14 +286,13 @@ function renderJobs() {
 
   if (!filtered.length) {
 
-    emptyState.hidden = false;
+    empty.hidden = false;
 
     return;
-
   }
 
 
-  emptyState.hidden = true;
+  empty.hidden = true;
 
 
   filtered.forEach(job => {
@@ -559,92 +304,55 @@ function renderJobs() {
     row.innerHTML = `
 
       <td class="job-name">
-
-        ${escapeHtml(
-          job.jobName || "—"
-        )}
-
+        ${safe(job.jobName)}
       </td>
 
-
       <td>
-
-        ${escapeHtml(
-          job.agentName || "—"
-        )}
-
+        ${safe(job.agentName)}
       </td>
 
-
       <td>
-
-        ${escapeHtml(
-          job.taskType || "—"
-        )}
-
+        ${safe(job.taskType)}
       </td>
 
-
       <td>
-
-        ${escapeHtml(
-          job.session || "—"
-        )}
-
+        ${safe(job.session)}
       </td>
 
-
       <td>
-
         ${Number(
           job.slices || 0
         ).toLocaleString()}
-
       </td>
 
-
       <td>
-
         ${priorityBadge(
           job.priority
         )}
-
       </td>
 
-
       <td>
-
         ${statusBadge(
           job.status
         )}
-
       </td>
 
-
       <td>
-
-        ${formatDateTime(
+        ${formatDate(
           job.startTimestamp
         )}
-
       </td>
 
-
       <td>
-
-        ${formatDateTime(
+        ${formatDate(
           job.finishTimestamp
         )}
-
       </td>
 
-
       <td>
-
-        ${escapeHtml(
+        ${safe(
           job.duration || "—"
         )}
-
       </td>
 
     `;
@@ -657,20 +365,19 @@ function renderJobs() {
 }
 
 
-/* =========================
-   AGENTS
-========================= */
+// =====================================================
+// AGENTS
+// =====================================================
 
 function renderAgents() {
 
-  const grid =
+  const container =
     document.getElementById(
       "agentsGrid"
     );
 
 
-  const agentMap =
-    new Map();
+  const agents = {};
 
 
   jobs.forEach(job => {
@@ -680,48 +387,48 @@ function renderAgents() {
       "Unassigned";
 
 
-    if (!agentMap.has(name)) {
+    if (!agents[name]) {
 
-      agentMap.set(
-        name,
-        {
-          jobs: [],
-          slices: 0
-        }
-      );
+      agents[name] = {
+
+        jobs: 0,
+
+        slices: 0,
+
+        activeJob: ""
+
+      };
 
     }
 
 
-    const agent =
-      agentMap.get(name);
+    agents[name].jobs++;
+
+    agents[name].slices +=
+      Number(job.slices || 0);
 
 
-    agent.jobs.push(job);
+    if (
+      String(job.status)
+        .toLowerCase() ===
+      "in progress"
+    ) {
 
+      agents[name].activeJob =
+        job.jobName;
 
-    agent.slices +=
-      Number(
-        job.slices || 0
-      );
+    }
 
   });
 
 
-  grid.innerHTML = "";
+  container.innerHTML = "";
 
 
-  agentMap.forEach(
-    (data, name) => {
-
-      const activeJob =
-        data.jobs.find(
-          job =>
-            normalize(
-              job.status
-            ) === "in progress"
-        );
-
+  Object.entries(
+    agents
+  ).forEach(
+    ([name, data]) => {
 
       const card =
         document.createElement(
@@ -740,42 +447,21 @@ function renderAgents() {
           <div>
 
             <div class="agent-name">
-
-              ${escapeHtml(name)}
-
+              ${safe(name)}
             </div>
 
-
             <div class="agent-job">
-
               ${
-                escapeHtml(
-                  activeJob
-                    ? activeJob.jobName
-                    : "No active job"
+                safe(
+                  data.activeJob ||
+                  "No active job"
                 )
               }
-
             </div>
 
           </div>
 
-
-          ${
-            activeJob
-
-              ? statusBadge(
-                  "In Progress"
-                )
-
-              : statusBadge(
-                  "Not Started"
-                )
-
-          }
-
         </div>
-
 
         <div class="agent-metrics">
 
@@ -786,11 +472,10 @@ function renderAgents() {
             </span>
 
             <strong>
-              ${data.jobs.length}
+              ${data.jobs}
             </strong>
 
           </div>
-
 
           <div class="metric">
 
@@ -799,7 +484,7 @@ function renderAgents() {
             </span>
 
             <strong>
-              ${data.slices.toLocaleString()}
+              ${data.slices}
             </strong>
 
           </div>
@@ -809,26 +494,26 @@ function renderAgents() {
       `;
 
 
-      grid.appendChild(card);
+      container.appendChild(card);
 
     }
-
   );
 
 }
 
 
-/* =========================
-   BADGES
-========================= */
+// =====================================================
+// BADGES
+// =====================================================
 
 function priorityBadge(
   priority
 ) {
 
   const high =
-    normalize(priority)
-    === "high";
+    String(priority)
+      .toLowerCase() ===
+    "high";
 
 
   return `
@@ -842,9 +527,7 @@ function priorityBadge(
       }
     ">
 
-      ${escapeHtml(
-        priority || "Normal"
-      )}
+      ${safe(priority || "Normal")}
 
     </span>
 
@@ -857,8 +540,9 @@ function statusBadge(
   status
 ) {
 
-  const normalized =
-    normalize(status);
+  const value =
+    String(status || "")
+      .toLowerCase();
 
 
   let className =
@@ -866,8 +550,7 @@ function statusBadge(
 
 
   if (
-    normalized ===
-    "in progress"
+    value === "in progress"
   ) {
 
     className =
@@ -877,8 +560,7 @@ function statusBadge(
 
 
   if (
-    normalized ===
-    "completed"
+    value === "completed"
   ) {
 
     className =
@@ -894,9 +576,7 @@ function statusBadge(
       ${className}
     ">
 
-      ${escapeHtml(
-        status || "Not Started"
-      )}
+      ${safe(status || "Not Started")}
 
     </span>
 
@@ -905,11 +585,11 @@ function statusBadge(
 }
 
 
-/* =========================
-   DATE / TIME
-========================= */
+// =====================================================
+// DATE
+// =====================================================
 
-function formatDateTime(
+function formatDate(
   value
 ) {
 
@@ -930,7 +610,7 @@ function formatDateTime(
     )
   ) {
 
-    return String(value);
+    return safe(value);
 
   }
 
@@ -948,25 +628,46 @@ function formatDateTime(
 }
 
 
-/* =========================
-   HELPERS
-========================= */
+// =====================================================
+// ERROR
+// =====================================================
 
-function normalize(value) {
+function showError(
+  message
+) {
 
-  return String(
-    value || ""
-  )
-    .trim()
-    .toLowerCase();
+  const body =
+    document.getElementById(
+      "jobsBody"
+    );
+
+
+  const empty =
+    document.getElementById(
+      "emptyState"
+    );
+
+
+  body.innerHTML = "";
+
+
+  empty.hidden = false;
+
+
+  empty.textContent =
+    message;
 
 }
 
 
-function escapeHtml(value) {
+// =====================================================
+// SECURITY
+// =====================================================
+
+function safe(value) {
 
   return String(
-    value ?? ""
+    value ?? "—"
   )
     .replaceAll(
       "&",
