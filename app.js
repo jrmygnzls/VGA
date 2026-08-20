@@ -15,7 +15,7 @@
 */
 
 
-const API_URL = "https://script.google.com/macros/s/AKfycby1A_PyCuH0-ZUq3Z70twUstxtTdx_V2GvmcWf2BXPkERSVZ_NzTi8CDfRQGc2B6s0-/exec?action=getAll";
+const API_URL = "https://script.google.com/macros/s/AKfycby1A_PyCuH0-ZUq3Z70twUstxtTdx_V2GvmcWf2BXPkERSVZ_NzTi8CDfRQGc2B6s0-/exec/exec?action=getAll";
 
 
 /* =========================
@@ -250,6 +250,103 @@ function getGoogleSheetData() {
       }
 
     }
+    
+    function doGet(e) {
+
+  try {
+
+    const action =
+      e &&
+      e.parameter &&
+      e.parameter.action
+        ? e.parameter.action
+        : "getAll";
+
+
+    let result;
+
+
+    if (action === "getAll") {
+
+      result = {
+        success: true,
+        ...getAllData()
+      };
+
+    } else {
+
+      result = {
+        success: false,
+        message: "Unknown action."
+      };
+
+    }
+
+
+    const callback =
+      e &&
+      e.parameter &&
+      e.parameter.callback
+        ? e.parameter.callback
+        : "";
+
+
+    // JSONP response for GitHub Pages
+    if (callback) {
+
+      return ContentService
+
+        .createTextOutput(
+          `${callback}(${JSON.stringify(result)})`
+        )
+
+        .setMimeType(
+          ContentService.MimeType.JAVASCRIPT
+        );
+
+    }
+
+
+    // Normal JSON response
+    return jsonResponse(result);
+
+
+  } catch (error) {
+
+    const result = {
+      success: false,
+      message: error.message
+    };
+
+
+    const callback =
+      e &&
+      e.parameter &&
+      e.parameter.callback
+        ? e.parameter.callback
+        : "";
+
+
+    if (callback) {
+
+      return ContentService
+
+        .createTextOutput(
+          `${callback}(${JSON.stringify(result)})`
+        )
+
+        .setMimeType(
+          ContentService.MimeType.JAVASCRIPT
+        );
+
+    }
+
+
+    return jsonResponse(result);
+
+  }
+
+}
 
 
     script.onerror =
