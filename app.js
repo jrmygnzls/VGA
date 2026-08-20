@@ -8,7 +8,7 @@
 // Example:
 // const API_URL = 'https://script.google.com/macros/s/XXXXXXXXXXXX/exec';
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbw1L6lTJqAaPA8YsWNhnv3-UkKmIDoMtTLVTfclGOGjKsalJDzjLsY68uEz1WYAodUw/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwjvqBwxUtXbOPHbk5-mMwbmJbv6avg5GHk6rqksvtAohN9NhCqr8wr-P0H5PKzp9OY/exec';
 
 let jobs = [];
 let agents = [];
