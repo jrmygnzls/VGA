@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Agent Job Tracker - Operations and production monitoring dashboard." />
+  <title>Agent Job Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="Agent Job Tracker home">
+        <span class="brand-mark">AJ</span>
+        <span class="brand-text">
+          <strong>Agent Job Tracker</strong>
+          <small>Operations &amp; Production Monitoring</small>
+        </span>
+      </a>
+
+      <nav class="main-nav" aria-label="Main navigation">
+        <a class="active" href="#dashboard">Dashboard</a>
+        <a href="#jobs">Jobs</a>
+        <a href="#agents">Agents</a>
+        <a href="#reports">Reports</a>
+      </nav>
+
+      <div class="topbar-actions">
+        <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle theme">◐</button>
+        <button class="profile-button" type="button" title="Profile">JD</button>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero" id="dashboard">
+        <div class="hero-copy">
+          <div class="eyebrow"><span class="pulse"></span> LIVE OPERATIONS</div>
+          <h1>Know what is happening<br><em>in the field.</em></h1>
+          <p>Track agent productivity, job status, sessions, slices and priority work from one operational view.</p>
+          <div class="hero-actions">
+            <button class="primary-button" id="newJobButton" type="button">+ New Job</button>
+            <a class="secondary-button" href="#jobs">View Jobs</a>
+          </div>
+        </div>
+
+        <div class="hero-visual" aria-hidden="true">
+          <div class="grid-lines"></div>
+          <div class="map-shape shape-one"></div>
+          <div class="map-shape shape-two"></div>
+          <div class="hero-card">
+            <div class="hero-card-head"><span>Operations health</span><strong>Today</strong></div>
+            <div class="health-score"><strong>94%</strong><span>on track</span></div>
+            <div class="mini-bars">
+              <span style="height:34%"></span><span style="height:51%"></span><span style="height:46%"></span><span style="height:71%"></span><span style="height:62%"></span><span style="height:83%"></span><span style="height:78%"></span></div>
+            <div class="mini-labels"><span>8AM</span><span>10AM</span><span>12PM</span><span>2PM</span><span>4PM</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="stats-section" aria-label="Today's summary">
+        <div class="section-heading">
+          <div><span class="eyebrow dark">TODAY'S OPERATIONS</span><h2>At a glance</h2></div>
+          <span class="date-badge" id="currentDate"></span>
+        </div>
+        <div class="stats-grid">
+          <article class="stat-card"><span class="stat-label">Active Agents</span><strong id="activeAgents">0</strong><span class="stat-note positive">● Working now</span></article>
+          <article class="stat-card"><span class="stat-label">Jobs in Progress</span><strong id="inProgressJobs">0</strong><span class="stat-note neutral">Live assignments</span></article>
+          <article class="stat-card"><span class="stat-label">Completed Today</span><strong id="completedJobs">0</strong><span class="stat-note positive">↑ Production</span></article>
+          <article class="stat-card dark-card"><span class="stat-label">Total Slices</span><strong id="totalSlices">0</strong><span class="stat-note light">Across all jobs</span></article>
+        </div>
+      </section>
+
+      <section class="content-section" id="jobs">
+        <div class="section-heading">
+          <div><span class="eyebrow dark">LIVE JOB MONITOR</span><h2>Jobs in the operation</h2></div>
+          <div class="toolbar">
+            <label class="search-box"><span>⌕</span><input id="searchInput" type="search" placeholder="Search jobs or agents..." /></label>
+            <select id="statusFilter" aria-label="Filter by status">
+              <option value="All">All status</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+              <option value="Not Started">Not Started</option>
+            </select>
+            <select id="priorityFilter" aria-label="Filter by priority">
+              <option value="All">All priority</option>
+              <option value="High">High</option>
+              <option value="Normal">Normal</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Agent</th><th>Job</th><th>Task Type</th><th>Session</th><th>Slices</th><th>Started</th><th>Priority</th><th>Status</th><th></th></tr>
+              </thead>
+              <tbody id="jobsTableBody"></tbody>
+            </table>
+          </div>
+          <div class="table-footer"><span id="tableCount">0 jobs</span><button class="text-button" type="button" id="clearFilters">Clear filters</button></div>
+        </div>
+      </section>
+
+      <section class="content-section agents-section" id="agents">
+        <div class="section-heading"><div><span class="eyebrow dark">AGENT OVERVIEW</span><h2>Who's working now</h2></div><span class="live-badge"><span class="pulse"></span> Live</span></div>
+        <div class="agents-grid" id="agentsGrid"></div>
+      </section>
+
+      <section class="content-section report-preview" id="reports">
+        <div class="section-heading"><div><span class="eyebrow dark">REPORTING</span><h2>Production snapshot</h2></div><button class="secondary-button" type="button" id="reportButton">Open report</button></div>
+        <div class="report-grid">
+          <div class="report-card"><span>Jobs by task type</span><div class="donut-wrap"><div class="donut" id="taskDonut"></div><div class="legend" id="taskLegend"></div></div></div>
+          <div class="report-card"><span>Completion trend</span><div class="trend-chart" id="trendChart"></div><div class="chart-labels"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span></div></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer"><span>Agent Job Tracker</span><span>Internal Operations System</span></footer>
+  </div>
+
+  <dialog id="jobDialog" class="job-dialog">
+    <form method="dialog" id="jobForm">
+      <div class="dialog-head"><div><span class="eyebrow dark">NEW ASSIGNMENT</span><h2>Create a job</h2></div><button class="close-button" type="button" id="closeDialog" aria-label="Close">×</button></div>
+      <div class="form-grid">
+        <label>Agent Name<select id="formAgent" required></select></label>
+        <label>Job Name<input id="formJob" required placeholder="e.g. JOB-1042" /></label>
+        <label>Task Type<select id="formTask" required><option>Identifying Poles and Lines</option><option>Encroachment</option></select></label>
+        <label>Session<select id="formSession" required><option>S1</option><option>S2</option><option>S3</option><option>S4</option></select></label>
+        <label>Slices<input id="formSlices" type="number" min="1" value="10" required /></label>
+        <label>Priority<select id="formPriority" required><option>Normal</option><option>High</option></select></label>
+      </div>
+      <div class="dialog-actions"><button class="secondary-button" type="button" id="cancelDialog">Cancel</button><button class="primary-button" type="submit">Create Job</button></div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
