@@ -1,6 +1,6 @@
 // =====================================================
 // AGENT JOB TRACKER
-// GOOGLE SHEETS CONNECTION
+// Google Sheets → Apps Script → GitHub Pages
 // =====================================================
 
 const API_URL =
@@ -10,32 +10,81 @@ let jobs = [];
 
 
 // =====================================================
-// START
+// START APPLICATION
 // =====================================================
 
 document.addEventListener("DOMContentLoaded", () => {
+
+  setupEvents();
+
   loadJobs();
 
-  document
-    .getElementById("searchInput")
-    .addEventListener("input", renderJobs);
-
-  document
-    .getElementById("statusFilter")
-    .addEventListener("change", renderJobs);
-
-  document
-    .getElementById("priorityFilter")
-    .addEventListener("change", renderJobs);
-
-  document
-    .getElementById("refreshBtn")
-    .addEventListener("click", loadJobs);
 });
 
 
 // =====================================================
-// LOAD GOOGLE SHEETS
+// EVENTS
+// =====================================================
+
+function setupEvents() {
+
+  const searchInput =
+    document.getElementById("searchInput");
+
+  const statusFilter =
+    document.getElementById("statusFilter");
+
+  const priorityFilter =
+    document.getElementById("priorityFilter");
+
+  const refreshBtn =
+    document.getElementById("refreshBtn");
+
+
+  if (searchInput) {
+
+    searchInput.addEventListener(
+      "input",
+      renderJobs
+    );
+
+  }
+
+
+  if (statusFilter) {
+
+    statusFilter.addEventListener(
+      "change",
+      renderJobs
+    );
+
+  }
+
+
+  if (priorityFilter) {
+
+    priorityFilter.addEventListener(
+      "change",
+      renderJobs
+    );
+
+  }
+
+
+  if (refreshBtn) {
+
+    refreshBtn.addEventListener(
+      "click",
+      loadJobs
+    );
+
+  }
+
+}
+
+
+// =====================================================
+// LOAD DATA FROM GOOGLE SHEETS
 // =====================================================
 
 function loadJobs() {
@@ -44,56 +93,87 @@ function loadJobs() {
     !API_URL ||
     API_URL.includes("PASTE_YOUR")
   ) {
+
     showError(
-      "Apps Script URL has not been added."
+      "Apps Script URL has not been added to app.js."
     );
+
     return;
+
   }
 
+
   const callbackName =
-    "sheetCallback_" + Date.now();
+    "sheetCallback_" +
+    Date.now();
+
 
   const script =
     document.createElement("script");
 
-  window[callbackName] = function(data) {
 
-    delete window[callbackName];
+  window[callbackName] =
+    function(data) {
 
-    script.remove();
+      delete window[callbackName];
 
-    if (!data || data.success !== true) {
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+
+
+      if (
+        !data ||
+        data.success !== true
+      ) {
+
+        showError(
+          "Apps Script returned an error."
+        );
+
+        return;
+
+      }
+
+
+      jobs =
+        Array.isArray(data.jobs)
+          ? data.jobs
+          : [];
+
+
+      renderAll();
+
+    };
+
+
+  script.onerror =
+    function() {
+
+      delete window[callbackName];
+
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+
+
       showError(
-        "Apps Script returned an error."
+        "Could not connect to Google Sheets."
       );
-      return;
-    }
 
-    jobs =
-      Array.isArray(data.jobs)
-        ? data.jobs
-        : [];
+    };
 
-    renderAll();
-  };
-
-  script.onerror = function() {
-
-    delete window[callbackName];
-
-    script.remove();
-
-    showError(
-      "Could not connect to Google Sheets."
-    );
-  };
 
   script.src =
     API_URL +
     "?action=getAll&prefix=" +
-    callbackName;
+    encodeURIComponent(
+      callbackName
+    );
+
 
   document.body.appendChild(script);
+
 }
 
 
@@ -103,7 +183,7 @@ function loadJobs() {
 
 function renderAll() {
 
-  renderStats();
+  renderStatistics();
 
   renderJobs();
 
@@ -113,39 +193,36 @@ function renderAll() {
 
 
 // =====================================================
-// STATS
+// STATISTICS
 // =====================================================
 
-function renderStats() {
+function renderStatistics() {
 
-  const active =
+  const activeJobs =
     jobs.filter(
       job =>
-        String(job.status)
-          .toLowerCase() ===
+        normalize(job.status) ===
         "in progress"
     ).length;
 
 
-  const completed =
+  const completedJobs =
     jobs.filter(
       job =>
-        String(job.status)
-          .toLowerCase() ===
+        normalize(job.status) ===
         "completed"
     ).length;
 
 
-  const high =
+  const highPriority =
     jobs.filter(
       job =>
-        String(job.priority)
-          .toLowerCase() ===
+        normalize(job.priority) ===
         "high"
     ).length;
 
 
-  const slices =
+  const totalSlices =
     jobs.reduce(
       (total, job) =>
         total +
@@ -154,25 +231,28 @@ function renderStats() {
     );
 
 
-  document.getElementById(
-    "activeJobs"
-  ).textContent = active;
+  setText(
+    "activeJobs",
+    activeJobs
+  );
 
 
-  document.getElementById(
-    "completedJobs"
-  ).textContent = completed;
+  setText(
+    "completedJobs",
+    completedJobs
+  );
 
 
-  document.getElementById(
-    "highPriority"
-  ).textContent = high;
+  setText(
+    "highPriority",
+    highPriority
+  );
 
 
-  document.getElementById(
-    "totalSlices"
-  ).textContent =
-    slices.toLocaleString();
+  setText(
+    "totalSlices",
+    totalSlices.toLocaleString()
+  );
 
 }
 
@@ -189,38 +269,59 @@ function renderJobs() {
     );
 
 
-  const empty =
+  const emptyState =
     document.getElementById(
       "emptyState"
     );
 
 
+  if (!body) {
+    return;
+  }
+
+
+  const searchInput =
+    document.getElementById(
+      "searchInput"
+    );
+
+
+  const statusFilter =
+    document.getElementById(
+      "statusFilter"
+    );
+
+
+  const priorityFilter =
+    document.getElementById(
+      "priorityFilter"
+    );
+
+
   const search =
-    document
-      .getElementById(
-        "searchInput"
-      )
-      .value
-      .toLowerCase()
-      .trim();
+    searchInput
+      ? searchInput.value
+          .trim()
+          .toLowerCase()
+      : "";
 
 
   const status =
-    document.getElementById(
-      "statusFilter"
-    ).value;
+    statusFilter
+      ? statusFilter.value
+      : "all";
 
 
   const priority =
-    document.getElementById(
-      "priorityFilter"
-    ).value;
+    priorityFilter
+      ? priorityFilter.value
+      : "all";
 
 
-  const filtered =
+  const filteredJobs =
     jobs.filter(job => {
 
-      const text = [
+      const searchableText = [
 
         job.jobName,
 
@@ -235,25 +336,27 @@ function renderJobs() {
         .toLowerCase();
 
 
+      const matchesSearch =
+        !search ||
+        searchableText.includes(search);
+
+
+      const matchesStatus =
+        status === "all" ||
+        normalize(job.status) ===
+        normalize(status);
+
+
+      const matchesPriority =
+        priority === "all" ||
+        normalize(job.priority) ===
+        normalize(priority);
+
+
       return (
-
-        (!search ||
-          text.includes(search))
-
-        &&
-
-        (
-          status === "all" ||
-          job.status === status
-        )
-
-        &&
-
-        (
-          priority === "all" ||
-          job.priority === priority
-        )
-
+        matchesSearch &&
+        matchesStatus &&
+        matchesPriority
       );
 
     });
@@ -262,18 +365,32 @@ function renderJobs() {
   body.innerHTML = "";
 
 
-  if (!filtered.length) {
+  if (
+    filteredJobs.length === 0
+  ) {
 
-    empty.hidden = false;
+    if (emptyState) {
+
+      emptyState.hidden = false;
+
+      emptyState.textContent =
+        jobs.length === 0
+          ? "No jobs found in Google Sheets."
+          : "No jobs match your filters.";
+
+    }
 
     return;
+
   }
 
 
-  empty.hidden = true;
+  if (emptyState) {
+    emptyState.hidden = true;
+  }
 
 
-  filtered.forEach(job => {
+  filteredJobs.forEach(job => {
 
     const row =
       document.createElement("tr");
@@ -282,19 +399,27 @@ function renderJobs() {
     row.innerHTML = `
 
       <td class="job-name">
-        ${safe(job.jobName)}
+        ${escapeHtml(
+          job.jobName || "—"
+        )}
       </td>
 
       <td>
-        ${safe(job.agentName)}
+        ${escapeHtml(
+          job.agentName || "—"
+        )}
       </td>
 
       <td>
-        ${safe(job.taskType)}
+        ${escapeHtml(
+          job.taskType || "—"
+        )}
       </td>
 
       <td>
-        ${safe(job.session)}
+        ${formatSession(
+          job.session
+        )}
       </td>
 
       <td>
@@ -304,31 +429,31 @@ function renderJobs() {
       </td>
 
       <td>
-        ${priorityBadge(
+        ${renderPriorityBadge(
           job.priority
         )}
       </td>
 
       <td>
-        ${statusBadge(
+        ${renderStatusBadge(
           job.status
         )}
       </td>
 
       <td>
-        ${formatDate(
+        ${formatDateTime(
           job.startTimestamp
         )}
       </td>
 
       <td>
-        ${formatDate(
+        ${formatDateTime(
           job.finishTimestamp
         )}
       </td>
 
       <td>
-        ${safe(
+        ${escapeHtml(
           job.duration || "—"
         )}
       </td>
@@ -355,47 +480,48 @@ function renderAgents() {
     );
 
 
-  const agents = {};
+  if (!container) {
+    return;
+  }
+
+
+  const agentMap =
+    new Map();
 
 
   jobs.forEach(job => {
 
-    const name =
+    const agentName =
       job.agentName ||
       "Unassigned";
 
 
-    if (!agents[name]) {
-
-      agents[name] = {
-
-        jobs: 0,
-
-        slices: 0,
-
-        activeJob: ""
-
-      };
-
-    }
-
-
-    agents[name].jobs++;
-
-    agents[name].slices +=
-      Number(job.slices || 0);
-
-
     if (
-      String(job.status)
-        .toLowerCase() ===
-      "in progress"
+      !agentMap.has(agentName)
     ) {
 
-      agents[name].activeJob =
-        job.jobName;
+      agentMap.set(
+        agentName,
+        {
+          jobs: [],
+          slices: 0
+        }
+      );
 
     }
+
+
+    const agent =
+      agentMap.get(agentName);
+
+
+    agent.jobs.push(job);
+
+
+    agent.slices +=
+      Number(
+        job.slices || 0
+      );
 
   });
 
@@ -403,10 +529,16 @@ function renderAgents() {
   container.innerHTML = "";
 
 
-  Object.entries(
-    agents
-  ).forEach(
-    ([name, data]) => {
+  agentMap.forEach(
+    (data, agentName) => {
+
+      const activeJob =
+        data.jobs.find(
+          job =>
+            normalize(job.status) ===
+            "in progress"
+        );
+
 
       const card =
         document.createElement(
@@ -425,21 +557,45 @@ function renderAgents() {
           <div>
 
             <div class="agent-name">
-              ${safe(name)}
+
+              ${escapeHtml(
+                agentName
+              )}
+
             </div>
 
+
             <div class="agent-job">
+
               ${
-                safe(
-                  data.activeJob ||
-                  "No active job"
-                )
+                activeJob
+                  ? escapeHtml(
+                      activeJob.jobName
+                    )
+                  : "No active job"
               }
+
             </div>
 
           </div>
 
+
+          <div>
+
+            ${
+              activeJob
+                ? renderStatusBadge(
+                    "In Progress"
+                  )
+                : renderStatusBadge(
+                    "Not Started"
+                  )
+            }
+
+          </div>
+
         </div>
+
 
         <div class="agent-metrics">
 
@@ -450,10 +606,11 @@ function renderAgents() {
             </span>
 
             <strong>
-              ${data.jobs}
+              ${data.jobs.length}
             </strong>
 
           </div>
+
 
           <div class="metric">
 
@@ -462,7 +619,7 @@ function renderAgents() {
             </span>
 
             <strong>
-              ${data.slices}
+              ${data.slices.toLocaleString()}
             </strong>
 
           </div>
@@ -481,16 +638,15 @@ function renderAgents() {
 
 
 // =====================================================
-// BADGES
+// PRIORITY BADGE
 // =====================================================
 
-function priorityBadge(
+function renderPriorityBadge(
   priority
 ) {
 
-  const high =
-    String(priority)
-      .toLowerCase() ===
+  const isHigh =
+    normalize(priority) ===
     "high";
 
 
@@ -499,13 +655,15 @@ function priorityBadge(
     <span class="
       badge
       ${
-        high
+        isHigh
           ? "badge-high"
           : "badge-normal"
       }
     ">
 
-      ${safe(priority || "Normal")}
+      ${escapeHtml(
+        priority || "Normal"
+      )}
 
     </span>
 
@@ -514,13 +672,16 @@ function priorityBadge(
 }
 
 
-function statusBadge(
+// =====================================================
+// STATUS BADGE
+// =====================================================
+
+function renderStatusBadge(
   status
 ) {
 
-  const value =
-    String(status || "")
-      .toLowerCase();
+  const normalized =
+    normalize(status);
 
 
   let className =
@@ -528,7 +689,8 @@ function statusBadge(
 
 
   if (
-    value === "in progress"
+    normalized ===
+    "in progress"
   ) {
 
     className =
@@ -538,7 +700,8 @@ function statusBadge(
 
 
   if (
-    value === "completed"
+    normalized ===
+    "completed"
   ) {
 
     className =
@@ -554,7 +717,9 @@ function statusBadge(
       ${className}
     ">
 
-      ${safe(status || "Not Started")}
+      ${escapeHtml(
+        status || "Not Started"
+      )}
 
     </span>
 
@@ -564,17 +729,62 @@ function statusBadge(
 
 
 // =====================================================
-// DATE
+// SESSION
 // =====================================================
 
-function formatDate(
+function formatSession(
+  session
+) {
+
+  if (!session) {
+    return "—";
+  }
+
+
+  const value =
+    String(session);
+
+
+  /*
+    Converts:
+    "Session 3"
+    into:
+    "S3"
+
+    If your spreadsheet already
+    returns "S3", it stays "S3".
+  */
+
+  const match =
+    value.match(
+      /(?:Session\s*)?(\d+)/i
+    );
+
+
+  if (match) {
+
+    return `S${match[1]}`;
+
+  }
+
+
+  return escapeHtml(
+    value
+  );
+
+}
+
+
+// =====================================================
+// DATE / TIME
+// =====================================================
+
+function formatDateTime(
   value
 ) {
 
   if (!value) {
-
     return "—";
-
   }
 
 
@@ -588,26 +798,30 @@ function formatDate(
     )
   ) {
 
-    return safe(value);
+    return escapeHtml(
+      String(value)
+    );
 
   }
 
 
-  return date.toLocaleString(
-    "en-PH",
-    {
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit"
-    }
+  return escapeHtml(
+    date.toLocaleString(
+      "en-PH",
+      {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit"
+      }
+    )
   );
 
 }
 
 
 // =====================================================
-// ERROR
+// ERROR MESSAGE
 // =====================================================
 
 function showError(
@@ -620,32 +834,71 @@ function showError(
     );
 
 
-  const empty =
+  const emptyState =
     document.getElementById(
       "emptyState"
     );
 
 
-  body.innerHTML = "";
+  if (body) {
+    body.innerHTML = "";
+  }
 
 
-  empty.hidden = false;
+  if (emptyState) {
 
+    emptyState.hidden = false;
 
-  empty.textContent =
-    message;
+    emptyState.textContent =
+      message;
+
+  }
 
 }
 
 
 // =====================================================
-// SECURITY
+// HELPERS
 // =====================================================
 
-function safe(value) {
+function normalize(
+  value
+) {
 
   return String(
-    value ?? "—"
+    value || ""
+  )
+    .trim()
+    .toLowerCase();
+
+}
+
+
+function setText(
+  id,
+  value
+) {
+
+  const element =
+    document.getElementById(id);
+
+
+  if (element) {
+
+    element.textContent =
+      value;
+
+  }
+
+}
+
+
+function escapeHtml(
+  value
+) {
+
+  return String(
+    value ?? ""
   )
     .replaceAll(
       "&",
