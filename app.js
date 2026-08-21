@@ -1,25 +1,36 @@
 // =====================================================
 // AGENT JOB TRACKER
-// Google Sheets → Apps Script → GitHub Pages
+// Google Sheets + Apps Script + GitHub Pages
+// =====================================================
+
+
+// =====================================================
+// API URL
 // =====================================================
 
 const API_URL =
   "https://script.google.com/macros/s/AKfycbxGpEvTmnk2sz7ZjLT3ITFHwh8W6bb2xlxV2XJzreCGw2VZb7zkod1JWobGhPbtebBE/exec";
 
+
 let jobs = [];
 
+let agents = [];
+
 
 // =====================================================
-// START APPLICATION
+// START
 // =====================================================
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener(
+  "DOMContentLoaded",
+  () => {
 
-  setupEvents();
+    setupEvents();
 
-  loadJobs();
+    loadJobs();
 
-});
+  }
+);
 
 
 // =====================================================
@@ -29,16 +40,51 @@ document.addEventListener("DOMContentLoaded", () => {
 function setupEvents() {
 
   const searchInput =
-    document.getElementById("searchInput");
+    document.getElementById(
+      "searchInput"
+    );
+
 
   const statusFilter =
-    document.getElementById("statusFilter");
+    document.getElementById(
+      "statusFilter"
+    );
+
 
   const priorityFilter =
-    document.getElementById("priorityFilter");
+    document.getElementById(
+      "priorityFilter"
+    );
+
 
   const refreshBtn =
-    document.getElementById("refreshBtn");
+    document.getElementById(
+      "refreshBtn"
+    );
+
+
+  const newJobBtn =
+    document.getElementById(
+      "newJobBtn"
+    );
+
+
+  const closeJobModal =
+    document.getElementById(
+      "closeJobModal"
+    );
+
+
+  const cancelJobBtn =
+    document.getElementById(
+      "cancelJobBtn"
+    );
+
+
+  const jobForm =
+    document.getElementById(
+      "jobForm"
+    );
 
 
   if (searchInput) {
@@ -80,22 +126,64 @@ function setupEvents() {
 
   }
 
+
+  if (newJobBtn) {
+
+    newJobBtn.addEventListener(
+      "click",
+      openNewJobModal
+    );
+
+  }
+
+
+  if (closeJobModal) {
+
+    closeJobModal.addEventListener(
+      "click",
+      closeNewJobModal
+    );
+
+  }
+
+
+  if (cancelJobBtn) {
+
+    cancelJobBtn.addEventListener(
+      "click",
+      closeNewJobModal
+    );
+
+  }
+
+
+  if (jobForm) {
+
+    jobForm.addEventListener(
+      "submit",
+      submitNewJob
+    );
+
+  }
+
 }
 
 
 // =====================================================
-// LOAD DATA FROM GOOGLE SHEETS
+// LOAD GOOGLE SHEETS DATA
 // =====================================================
 
 function loadJobs() {
 
   if (
     !API_URL ||
-    API_URL.includes("PASTE_YOUR")
+    API_URL.includes(
+      "PASTE_YOUR"
+    )
   ) {
 
     showError(
-      "Apps Script URL has not been added to app.js."
+      "Apps Script URL has not been added."
     );
 
     return;
@@ -109,16 +197,28 @@ function loadJobs() {
 
 
   const script =
-    document.createElement("script");
+    document.createElement(
+      "script"
+    );
 
 
   window[callbackName] =
     function(data) {
 
-      delete window[callbackName];
+      delete window[
+        callbackName
+      ];
 
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
+
+      if (
+        script.parentNode
+      ) {
+
+        script.parentNode
+          .removeChild(
+            script
+          );
+
       }
 
 
@@ -128,6 +228,7 @@ function loadJobs() {
       ) {
 
         showError(
+          data?.message ||
           "Apps Script returned an error."
         );
 
@@ -137,8 +238,18 @@ function loadJobs() {
 
 
       jobs =
-        Array.isArray(data.jobs)
+        Array.isArray(
+          data.jobs
+        )
           ? data.jobs
+          : [];
+
+
+      agents =
+        Array.isArray(
+          data.agents
+        )
+          ? data.agents
           : [];
 
 
@@ -150,10 +261,20 @@ function loadJobs() {
   script.onerror =
     function() {
 
-      delete window[callbackName];
+      delete window[
+        callbackName
+      ];
 
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
+
+      if (
+        script.parentNode
+      ) {
+
+        script.parentNode
+          .removeChild(
+            script
+          );
+
       }
 
 
@@ -172,13 +293,15 @@ function loadJobs() {
     );
 
 
-  document.body.appendChild(script);
+  document.body.appendChild(
+    script
+  );
 
 }
 
 
 // =====================================================
-// RENDER EVERYTHING
+// RENDER
 // =====================================================
 
 function renderAll() {
@@ -198,60 +321,71 @@ function renderAll() {
 
 function renderStatistics() {
 
-  const activeJobs =
+  const active =
     jobs.filter(
       job =>
-        normalize(job.status) ===
+        normalize(
+          job.status
+        ) ===
         "in progress"
     ).length;
 
 
-  const completedJobs =
+  const completed =
     jobs.filter(
       job =>
-        normalize(job.status) ===
+        normalize(
+          job.status
+        ) ===
         "completed"
     ).length;
 
 
-  const highPriority =
+  const high =
     jobs.filter(
       job =>
-        normalize(job.priority) ===
+        normalize(
+          job.priority
+        ) ===
         "high"
     ).length;
 
 
-  const totalSlices =
+  const slices =
     jobs.reduce(
-      (total, job) =>
+      (
+        total,
+        job
+      ) =>
         total +
-        Number(job.slices || 0),
+        Number(
+          job.slices || 0
+        ),
       0
     );
 
 
   setText(
     "activeJobs",
-    activeJobs
+    active
   );
 
 
   setText(
     "completedJobs",
-    completedJobs
+    completed
   );
 
 
   setText(
     "highPriority",
-    highPriority
+    high
   );
 
 
   setText(
     "totalSlices",
-    totalSlices.toLocaleString()
+    slices.toLocaleString()
   );
 
 }
@@ -269,7 +403,7 @@ function renderJobs() {
     );
 
 
-  const emptyState =
+  const empty =
     document.getElementById(
       "emptyState"
     );
@@ -280,102 +414,106 @@ function renderJobs() {
   }
 
 
-  const searchInput =
-    document.getElementById(
-      "searchInput"
-    );
-
-
-  const statusFilter =
-    document.getElementById(
-      "statusFilter"
-    );
-
-
-  const priorityFilter =
-    document.getElementById(
-      "priorityFilter"
-    );
-
-
   const search =
-    searchInput
-      ? searchInput.value
-          .trim()
-          .toLowerCase()
-      : "";
+    document
+      .getElementById(
+        "searchInput"
+      )
+      ?.value
+      .trim()
+      .toLowerCase() ||
+    "";
 
 
   const status =
-    statusFilter
-      ? statusFilter.value
-      : "all";
+    document.getElementById(
+      "statusFilter"
+    )?.value ||
+    "all";
 
 
   const priority =
-    priorityFilter
-      ? priorityFilter.value
-      : "all";
+    document.getElementById(
+      "priorityFilter"
+    )?.value ||
+    "all";
 
 
-  const filteredJobs =
-    jobs.filter(job => {
+  const filtered =
+    jobs.filter(
+      job => {
 
-      const searchableText = [
+        const searchableText = [
 
-        job.jobName,
+          job.jobName,
 
-        job.agentName,
+          job.agentName,
 
-        job.taskType,
+          job.taskType,
 
-        job.session
+          job.session
 
-      ]
-        .join(" ")
-        .toLowerCase();
-
-
-      const matchesSearch =
-        !search ||
-        searchableText.includes(search);
+        ]
+          .join(" ")
+          .toLowerCase();
 
 
-      const matchesStatus =
-        status === "all" ||
-        normalize(job.status) ===
-        normalize(status);
+        return (
 
+          (
+            !search ||
+            searchableText
+              .includes(
+                search
+              )
+          )
 
-      const matchesPriority =
-        priority === "all" ||
-        normalize(job.priority) ===
-        normalize(priority);
+          &&
 
+          (
+            status === "all" ||
+            normalize(
+              job.status
+            ) ===
+            normalize(
+              status
+            )
+          )
 
-      return (
-        matchesSearch &&
-        matchesStatus &&
-        matchesPriority
-      );
+          &&
 
-    });
+          (
+            priority === "all" ||
+            normalize(
+              job.priority
+            ) ===
+            normalize(
+              priority
+            )
+          )
+
+        );
+
+      }
+    );
 
 
   body.innerHTML = "";
 
 
   if (
-    filteredJobs.length === 0
+    filtered.length === 0
   ) {
 
-    if (emptyState) {
+    if (empty) {
 
-      emptyState.hidden = false;
+      empty.hidden = false;
 
-      emptyState.textContent =
+      empty.textContent =
         jobs.length === 0
-          ? "No jobs found in Google Sheets."
+
+          ? "No jobs found."
+
           : "No jobs match your filters.";
 
     }
@@ -385,85 +523,126 @@ function renderJobs() {
   }
 
 
-  if (emptyState) {
-    emptyState.hidden = true;
+  if (empty) {
+
+    empty.hidden = true;
+
   }
 
 
-  filteredJobs.forEach(job => {
+  filtered.forEach(
+    job => {
 
-    const row =
-      document.createElement("tr");
-
-
-    row.innerHTML = `
-
-      <td class="job-name">
-        ${escapeHtml(
-          job.jobName || "—"
-        )}
-      </td>
-
-      <td>
-        ${escapeHtml(
-          job.agentName || "—"
-        )}
-      </td>
-
-      <td>
-        ${escapeHtml(
-          job.taskType || "—"
-        )}
-      </td>
-
-      <td>
-        ${formatSession(
-          job.session
-        )}
-      </td>
-
-      <td>
-        ${Number(
-          job.slices || 0
-        ).toLocaleString()}
-      </td>
-
-      <td>
-        ${renderPriorityBadge(
-          job.priority
-        )}
-      </td>
-
-      <td>
-        ${renderStatusBadge(
-          job.status
-        )}
-      </td>
-
-      <td>
-        ${formatDateTime(
-          job.startTimestamp
-        )}
-      </td>
-
-      <td>
-        ${formatDateTime(
-          job.finishTimestamp
-        )}
-      </td>
-
-      <td>
-        ${escapeHtml(
-          job.duration || "—"
-        )}
-      </td>
-
-    `;
+      const row =
+        document.createElement(
+          "tr"
+        );
 
 
-    body.appendChild(row);
+      row.innerHTML = `
 
-  });
+        <td class="job-name">
+
+          ${escapeHtml(
+            job.jobName ||
+            "—"
+          )}
+
+        </td>
+
+
+        <td>
+
+          ${escapeHtml(
+            job.agentName ||
+            "—"
+          )}
+
+        </td>
+
+
+        <td>
+
+          ${escapeHtml(
+            job.taskType ||
+            "—"
+          )}
+
+        </td>
+
+
+        <td>
+
+          ${formatSession(
+            job.session
+          )}
+
+        </td>
+
+
+        <td>
+
+          ${Number(
+            job.slices || 0
+          ).toLocaleString()}
+
+        </td>
+
+
+        <td>
+
+          ${renderPriorityBadge(
+            job.priority
+          )}
+
+        </td>
+
+
+        <td>
+
+          ${renderStatusBadge(
+            job.status
+          )}
+
+        </td>
+
+
+        <td>
+
+          ${formatDateTime(
+            job.startTimestamp
+          )}
+
+        </td>
+
+
+        <td>
+
+          ${formatDateTime(
+            job.finishTimestamp
+          )}
+
+        </td>
+
+
+        <td>
+
+          ${escapeHtml(
+            job.duration ||
+            "—"
+          )}
+
+        </td>
+
+      `;
+
+
+      body.appendChild(
+        row
+      );
+
+    }
+  );
 
 }
 
@@ -485,58 +664,92 @@ function renderAgents() {
   }
 
 
-  const agentMap =
-    new Map();
+  const agentNames = [];
 
 
-  jobs.forEach(job => {
+  /*
+    Use names from the Agents sheet first.
+  */
 
-    const agentName =
-      job.agentName ||
-      "Unassigned";
+  agents.forEach(
+    agent => {
 
+      if (
+        agent.agentName &&
+        !agentNames.includes(
+          agent.agentName
+        )
+      ) {
 
-    if (
-      !agentMap.has(agentName)
-    ) {
+        agentNames.push(
+          agent.agentName
+        );
 
-      agentMap.set(
-        agentName,
-        {
-          jobs: [],
-          slices: 0
-        }
-      );
+      }
 
     }
+  );
 
 
-    const agent =
-      agentMap.get(agentName);
+  /*
+    Also include agents who have jobs.
+  */
 
+  jobs.forEach(
+    job => {
 
-    agent.jobs.push(job);
+      if (
+        job.agentName &&
+        !agentNames.includes(
+          job.agentName
+        )
+      ) {
 
+        agentNames.push(
+          job.agentName
+        );
 
-    agent.slices +=
-      Number(
-        job.slices || 0
-      );
+      }
 
-  });
+    }
+  );
 
 
   container.innerHTML = "";
 
 
-  agentMap.forEach(
-    (data, agentName) => {
+  agentNames.forEach(
+    agentName => {
+
+      const agentJobs =
+        jobs.filter(
+          job =>
+            job.agentName ===
+            agentName
+        );
+
 
       const activeJob =
-        data.jobs.find(
+        agentJobs.find(
           job =>
-            normalize(job.status) ===
+            normalize(
+              job.status
+            ) ===
             "in progress"
+        );
+
+
+      const slices =
+        agentJobs.reduce(
+          (
+            total,
+            job
+          ) =>
+            total +
+            Number(
+              job.slices || 0
+            ),
+          0
         );
 
 
@@ -570,7 +783,8 @@ function renderAgents() {
               ${
                 activeJob
                   ? escapeHtml(
-                      activeJob.jobName
+                      activeJob
+                        .jobName
                     )
                   : "No active job"
               }
@@ -580,19 +794,17 @@ function renderAgents() {
           </div>
 
 
-          <div>
+          ${
+            activeJob
 
-            ${
-              activeJob
-                ? renderStatusBadge(
-                    "In Progress"
-                  )
-                : renderStatusBadge(
-                    "Not Started"
-                  )
-            }
+              ? renderStatusBadge(
+                  "In Progress"
+                )
 
-          </div>
+              : renderStatusBadge(
+                  "Not Started"
+                )
+          }
 
         </div>
 
@@ -606,7 +818,7 @@ function renderAgents() {
             </span>
 
             <strong>
-              ${data.jobs.length}
+              ${agentJobs.length}
             </strong>
 
           </div>
@@ -619,7 +831,7 @@ function renderAgents() {
             </span>
 
             <strong>
-              ${data.slices.toLocaleString()}
+              ${slices.toLocaleString()}
             </strong>
 
           </div>
@@ -629,7 +841,9 @@ function renderAgents() {
       `;
 
 
-      container.appendChild(card);
+      container.appendChild(
+        card
+      );
 
     }
   );
@@ -638,7 +852,532 @@ function renderAgents() {
 
 
 // =====================================================
-// PRIORITY BADGE
+// NEW JOB MODAL
+// =====================================================
+
+function openNewJobModal() {
+
+  const modal =
+    document.getElementById(
+      "jobModal"
+    );
+
+
+  if (!modal) {
+    return;
+  }
+
+
+  populateNewJobOptions();
+
+
+  const message =
+    document.getElementById(
+      "jobFormMessage"
+    );
+
+
+  if (message) {
+
+    message.textContent = "";
+
+    message.className =
+      "form-message";
+
+  }
+
+
+  modal.hidden = false;
+
+}
+
+
+function closeNewJobModal() {
+
+  const modal =
+    document.getElementById(
+      "jobModal"
+    );
+
+
+  if (modal) {
+
+    modal.hidden =
+      true;
+
+  }
+
+
+  const form =
+    document.getElementById(
+      "jobForm"
+    );
+
+
+  if (form) {
+
+    form.reset();
+
+  }
+
+}
+
+
+// =====================================================
+// NEW JOB OPTIONS
+// =====================================================
+
+function populateNewJobOptions() {
+
+  const agentSelect =
+    document.getElementById(
+      "newAgent"
+    );
+
+
+  const taskSelect =
+    document.getElementById(
+      "newTaskType"
+    );
+
+
+  const sessionSelect =
+    document.getElementById(
+      "newSession"
+    );
+
+
+  /*
+    AGENTS
+  */
+
+  if (agentSelect) {
+
+    agentSelect.innerHTML = `
+      <option value="">
+        Select agent
+      </option>
+    `;
+
+
+    const names = [];
+
+
+    agents.forEach(
+      agent => {
+
+        if (
+          agent.agentName &&
+          !names.includes(
+            agent.agentName
+          )
+        ) {
+
+          names.push(
+            agent.agentName
+          );
+
+        }
+
+      }
+    );
+
+
+    /*
+      If the Agents sheet isn't
+      populated yet, use agents
+      already found in jobs.
+    */
+
+    jobs.forEach(
+      job => {
+
+        if (
+          job.agentName &&
+          !names.includes(
+            job.agentName
+          )
+        ) {
+
+          names.push(
+            job.agentName
+          );
+
+        }
+
+      }
+    );
+
+
+    names.forEach(
+      name => {
+
+        const option =
+          document.createElement(
+            "option"
+          );
+
+
+        option.value =
+          name;
+
+
+        option.textContent =
+          name;
+
+
+        agentSelect.appendChild(
+          option
+        );
+
+      }
+    );
+
+  }
+
+
+  /*
+    TASK TYPES
+  */
+
+  if (taskSelect) {
+
+    taskSelect.innerHTML = `
+
+      <option value="">
+        Select task type
+      </option>
+
+      <option value="encroachment">
+        encroachment
+      </option>
+
+      <option value="identification of poles and lines">
+        identification of poles and lines
+      </option>
+
+    `;
+
+  }
+
+
+  /*
+    SESSIONS
+  */
+
+  if (sessionSelect) {
+
+    sessionSelect.innerHTML = `
+      <option value="">
+        Select session
+      </option>
+    `;
+
+
+    for (
+      let i = 1;
+      i <= 50;
+      i++
+    ) {
+
+      const option =
+        document.createElement(
+          "option"
+        );
+
+
+      option.value =
+        `S${i}`;
+
+
+      option.textContent =
+        `S${i}`;
+
+
+      sessionSelect.appendChild(
+        option
+      );
+
+    }
+
+  }
+
+}
+
+
+// =====================================================
+// CREATE NEW JOB
+// =====================================================
+
+function submitNewJob(
+  event
+) {
+
+  event.preventDefault();
+
+
+  const jobName =
+    document.getElementById(
+      "newJobName"
+    ).value.trim();
+
+
+  const agentName =
+    document.getElementById(
+      "newAgent"
+    ).value;
+
+
+  const taskType =
+    document.getElementById(
+      "newTaskType"
+    ).value;
+
+
+  const session =
+    document.getElementById(
+      "newSession"
+    ).value;
+
+
+  const slices =
+    document.getElementById(
+      "newSlices"
+    ).value;
+
+
+  const priority =
+    document.getElementById(
+      "newPriority"
+    ).value;
+
+
+  if (!jobName) {
+
+    showFormMessage(
+      "Please enter a job name.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  if (!agentName) {
+
+    showFormMessage(
+      "Please select an agent.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  if (!taskType) {
+
+    showFormMessage(
+      "Please select a task type.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  if (!session) {
+
+    showFormMessage(
+      "Please select a session.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  if (
+    slices === "" ||
+    Number(slices) < 0
+  ) {
+
+    showFormMessage(
+      "Please enter a valid number of slices.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  if (
+    !API_URL ||
+    API_URL.includes(
+      "PASTE_YOUR"
+    )
+  ) {
+
+    showFormMessage(
+      "Apps Script URL has not been configured.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  showFormMessage(
+    "Saving job...",
+    "success"
+  );
+
+
+  const callbackName =
+    "createJobCallback_" +
+    Date.now();
+
+
+  const script =
+    document.createElement(
+      "script"
+    );
+
+
+  window[callbackName] =
+    function(result) {
+
+      delete window[
+        callbackName
+      ];
+
+
+      if (
+        script.parentNode
+      ) {
+
+        script.parentNode
+          .removeChild(
+            script
+          );
+
+      }
+
+
+      if (
+        !result ||
+        result.success !== true
+      ) {
+
+        showFormMessage(
+          result?.message ||
+          "Unable to create the job.",
+          "error"
+        );
+
+        return;
+
+      }
+
+
+      showFormMessage(
+        "Job created successfully.",
+        "success"
+      );
+
+
+      setTimeout(
+        () => {
+
+          closeNewJobModal();
+
+          loadJobs();
+
+        },
+        500
+      );
+
+    };
+
+
+  script.onerror =
+    function() {
+
+      delete window[
+        callbackName
+      ];
+
+
+      if (
+        script.parentNode
+      ) {
+
+        script.parentNode
+          .removeChild(
+            script
+          );
+
+      }
+
+
+      showFormMessage(
+        "Unable to connect to Google Sheets.",
+        "error"
+      );
+
+    };
+
+
+  const params =
+    new URLSearchParams({
+
+      action:
+        "createJob",
+
+      prefix:
+        callbackName,
+
+      jobName:
+        jobName,
+
+      agentName:
+        agentName,
+
+      taskType:
+        taskType,
+
+      session:
+        session,
+
+      slices:
+        slices,
+
+      priority:
+        priority
+
+    });
+
+
+  script.src =
+    API_URL +
+    "?" +
+    params.toString();
+
+
+  document.body.appendChild(
+    script
+  );
+
+}
+
+
+// =====================================================
+// BADGES
 // =====================================================
 
 function renderPriorityBadge(
@@ -646,7 +1385,9 @@ function renderPriorityBadge(
 ) {
 
   const isHigh =
-    normalize(priority) ===
+    normalize(
+      priority
+    ) ===
     "high";
 
 
@@ -662,7 +1403,8 @@ function renderPriorityBadge(
     ">
 
       ${escapeHtml(
-        priority || "Normal"
+        priority ||
+        "Normal"
       )}
 
     </span>
@@ -672,16 +1414,14 @@ function renderPriorityBadge(
 }
 
 
-// =====================================================
-// STATUS BADGE
-// =====================================================
-
 function renderStatusBadge(
   status
 ) {
 
-  const normalized =
-    normalize(status);
+  const value =
+    normalize(
+      status
+    );
 
 
   let className =
@@ -689,7 +1429,7 @@ function renderStatusBadge(
 
 
   if (
-    normalized ===
+    value ===
     "in progress"
   ) {
 
@@ -700,7 +1440,7 @@ function renderStatusBadge(
 
 
   if (
-    normalized ===
+    value ===
     "completed"
   ) {
 
@@ -718,7 +1458,8 @@ function renderStatusBadge(
     ">
 
       ${escapeHtml(
-        status || "Not Started"
+        status ||
+        "Not Started"
       )}
 
     </span>
@@ -729,7 +1470,7 @@ function renderStatusBadge(
 
 
 // =====================================================
-// SESSION
+// SESSION DISPLAY
 // =====================================================
 
 function formatSession(
@@ -737,23 +1478,17 @@ function formatSession(
 ) {
 
   if (!session) {
+
     return "—";
+
   }
 
 
   const value =
-    String(session);
+    String(
+      session
+    );
 
-
-  /*
-    Converts:
-    "Session 3"
-    into:
-    "S3"
-
-    If your spreadsheet already
-    returns "S3", it stays "S3".
-  */
 
   const match =
     value.match(
@@ -784,12 +1519,16 @@ function formatDateTime(
 ) {
 
   if (!value) {
+
     return "—";
+
   }
 
 
   const date =
-    new Date(value);
+    new Date(
+      value
+    );
 
 
   if (
@@ -799,29 +1538,71 @@ function formatDateTime(
   ) {
 
     return escapeHtml(
-      String(value)
+      String(
+        value
+      )
     );
 
   }
 
 
   return escapeHtml(
+
     date.toLocaleString(
       "en-PH",
       {
-        month: "short",
-        day: "numeric",
-        hour: "numeric",
-        minute: "2-digit"
+        month:
+          "short",
+
+        day:
+          "numeric",
+
+        hour:
+          "numeric",
+
+        minute:
+          "2-digit"
       }
     )
+
   );
 
 }
 
 
 // =====================================================
-// ERROR MESSAGE
+// FORM MESSAGE
+// =====================================================
+
+function showFormMessage(
+  message,
+  type
+) {
+
+  const element =
+    document.getElementById(
+      "jobFormMessage"
+    );
+
+
+  if (!element) {
+    return;
+  }
+
+
+  element.textContent =
+    message;
+
+
+  element.className =
+    "form-message " +
+    type;
+
+}
+
+
+// =====================================================
+// ERROR
 // =====================================================
 
 function showError(
@@ -834,22 +1615,26 @@ function showError(
     );
 
 
-  const emptyState =
+  const empty =
     document.getElementById(
       "emptyState"
     );
 
 
   if (body) {
-    body.innerHTML = "";
+
+    body.innerHTML =
+      "";
+
   }
 
 
-  if (emptyState) {
+  if (empty) {
 
-    emptyState.hidden = false;
+    empty.hidden =
+      false;
 
-    emptyState.textContent =
+    empty.textContent =
       message;
 
   }
@@ -866,7 +1651,8 @@ function normalize(
 ) {
 
   return String(
-    value || ""
+    value ||
+    ""
   )
     .trim()
     .toLowerCase();
@@ -880,7 +1666,9 @@ function setText(
 ) {
 
   const element =
-    document.getElementById(id);
+    document.getElementById(
+      id
+    );
 
 
   if (element) {
@@ -898,7 +1686,8 @@ function escapeHtml(
 ) {
 
   return String(
-    value ?? ""
+    value ??
+    ""
   )
     .replaceAll(
       "&",
