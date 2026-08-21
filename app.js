@@ -4,7 +4,7 @@
 // =====================================================
 
 const API_URL =
-  "https://script.google.com/macros/s/AKfycby1A_PyCuH0-ZUq3Z70twUstxtTdx_V2GvmcWf2BXPkERSVZ_NzTi8CDfRQGc2B6s0-/exec";
+  "https://script.google.com/macros/s/AKfycbxGpEvTmnk2sz7ZjLT3ITFHwh8W6bb2xlxV2XJzreCGw2VZb7zkod1JWobGhPbtebBE/exec";
 
 let jobs = [];
 
@@ -44,78 +44,56 @@ function loadJobs() {
     !API_URL ||
     API_URL.includes("PASTE_YOUR")
   ) {
-
     showError(
-      "Apps Script URL has not been added to app.js."
+      "Apps Script URL has not been added."
     );
-
     return;
   }
-
 
   const callbackName =
     "sheetCallback_" + Date.now();
 
-
   const script =
     document.createElement("script");
 
+  window[callbackName] = function(data) {
 
-  window[callbackName] =
-    function(data) {
+    delete window[callbackName];
 
-      delete window[callbackName];
+    script.remove();
 
-      script.remove();
-
-
-      if (
-        !data ||
-        data.success !== true
-      ) {
-
-        showError(
-          "Apps Script returned an error."
-        );
-
-        return;
-      }
-
-
-      jobs =
-        Array.isArray(data.jobs)
-          ? data.jobs
-          : [];
-
-
-      renderAll();
-
-    };
-
-
-  script.onerror =
-    function() {
-
-      delete window[callbackName];
-
-      script.remove();
-
-
+    if (!data || data.success !== true) {
       showError(
-        "Could not connect to Google Sheets."
+        "Apps Script returned an error."
       );
+      return;
+    }
 
-    };
+    jobs =
+      Array.isArray(data.jobs)
+        ? data.jobs
+        : [];
 
+    renderAll();
+  };
+
+  script.onerror = function() {
+
+    delete window[callbackName];
+
+    script.remove();
+
+    showError(
+      "Could not connect to Google Sheets."
+    );
+  };
 
   script.src =
     API_URL +
-    "?action=getAll&callback=" +
+    "?action=getAll&prefix=" +
     callbackName;
 
-
   document.body.appendChild(script);
-
 }
 
 
