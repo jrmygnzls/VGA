@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,39 +12,81 @@
 
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-    rel="stylesheet"
-  >
+    rel="stylesheet">
 
   <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-  <!-- HEADER -->
+  <!-- =========================
+       HEADER
+  ========================== -->
+
   <header class="topbar">
 
     <a href="#dashboard" class="brand">
-      <span class="brand-mark">VA</span>
-      <span>Agent Job Tracker</span>
+
+      <span class="brand-mark">
+        VA
+      </span>
+
+      <span>
+        Agent Job Tracker
+      </span>
+
     </a>
 
+
     <nav class="nav">
-      <a href="#dashboard">Dashboard</a>
-      <a href="#jobs">Jobs</a>
-      <a href="#agents">Agents</a>
+
+      <a href="#dashboard">
+        Dashboard
+      </a>
+
+      <a href="#jobs">
+        Jobs
+      </a>
+
+      <a href="#agents">
+        Agents
+      </a>
+
     </nav>
 
-    <button id="refreshBtn" class="refresh-btn">
-      Refresh
-    </button>
+
+    <div class="top-actions">
+
+      <button
+        id="newJobBtn"
+        class="new-job-btn"
+        type="button">
+        + New Job
+      </button>
+
+      <button
+        id="refreshBtn"
+        class="refresh-btn"
+        type="button">
+        Refresh
+      </button>
+
+    </div>
 
   </header>
 
 
-  <!-- HERO -->
+  <!-- =========================
+       MAIN
+  ========================== -->
+
   <main>
 
-    <section class="hero" id="dashboard">
+    <!-- HERO -->
+
+    <section
+      class="hero"
+      id="dashboard">
 
       <div class="hero-content">
 
@@ -52,18 +95,23 @@
         </p>
 
         <h1>
-          Keep every job<br>
+          Keep every job
+          <br>
           <span>moving forward.</span>
         </h1>
 
         <p class="hero-description">
-          A simple internal workspace for monitoring agents,
-          sessions, slices, priorities and job progress.
+          A simple internal workspace for monitoring
+          agents, sessions, slices, priorities and
+          job progress.
         </p>
 
       </div>
 
-      <div class="hero-decoration">
+
+      <div
+        class="hero-decoration"
+        aria-hidden="true">
 
         <div class="utility-line line-one"></div>
         <div class="utility-line line-two"></div>
@@ -83,23 +131,54 @@
     <section class="stats">
 
       <div class="stat-card">
-        <span>ACTIVE JOBS</span>
-        <strong id="activeJobs">0</strong>
+
+        <span>
+          ACTIVE JOBS
+        </span>
+
+        <strong id="activeJobs">
+          0
+        </strong>
+
       </div>
 
-      <div class="stat-card">
-        <span>COMPLETED TODAY</span>
-        <strong id="completedJobs">0</strong>
-      </div>
 
       <div class="stat-card">
-        <span>HIGH PRIORITY</span>
-        <strong id="highPriority">0</strong>
+
+        <span>
+          COMPLETED TODAY
+        </span>
+
+        <strong id="completedJobs">
+          0
+        </strong>
+
       </div>
 
+
       <div class="stat-card">
-        <span>TOTAL SLICES</span>
-        <strong id="totalSlices">0</strong>
+
+        <span>
+          HIGH PRIORITY
+        </span>
+
+        <strong id="highPriority">
+          0
+        </strong>
+
+      </div>
+
+
+      <div class="stat-card">
+
+        <span>
+          TOTAL SLICES
+        </span>
+
+        <strong id="totalSlices">
+          0
+        </strong>
+
       </div>
 
     </section>
@@ -107,11 +186,14 @@
 
     <!-- JOBS -->
 
-    <section class="section" id="jobs">
+    <section
+      class="section"
+      id="jobs">
 
       <div class="section-header">
 
         <div>
+
           <p class="eyebrow green">
             LIVE WORK
           </p>
@@ -119,15 +201,17 @@
           <h2>
             Jobs
           </h2>
+
         </div>
+
 
         <div class="filters">
 
           <input
             id="searchInput"
             type="search"
-            placeholder="Search jobs or agents..."
-          >
+            placeholder="Search jobs or agents...">
+
 
           <select id="statusFilter">
 
@@ -179,29 +263,50 @@
 
             <tr>
 
-              <th>Job</th>
+              <th>
+                Job
+              </th>
 
-              <th>Agent</th>
+              <th>
+                Agent
+              </th>
 
-              <th>Task</th>
+              <th>
+                Task
+              </th>
 
-              <th>Session</th>
+              <th>
+                Session
+              </th>
 
-              <th>Slices</th>
+              <th>
+                Slices
+              </th>
 
-              <th>Priority</th>
+              <th>
+                Priority
+              </th>
 
-              <th>Status</th>
+              <th>
+                Status
+              </th>
 
-              <th>Start</th>
+              <th>
+                Start
+              </th>
 
-              <th>Finish</th>
+              <th>
+                Finish
+              </th>
 
-              <th>Duration</th>
+              <th>
+                Duration
+              </th>
 
             </tr>
 
           </thead>
+
 
           <tbody id="jobsBody"></tbody>
 
@@ -209,12 +314,14 @@
 
       </div>
 
+
       <div
         id="emptyState"
         class="empty-state"
-        hidden
-      >
-        No jobs match your filters.
+        hidden>
+
+        No jobs found.
+
       </div>
 
     </section>
@@ -224,8 +331,7 @@
 
     <section
       class="section"
-      id="agents"
-    >
+      id="agents">
 
       <div class="section-header">
 
@@ -246,15 +352,211 @@
 
       <div
         id="agentsGrid"
-        class="agents-grid"
-      ></div>
+        class="agents-grid">
+
+      </div>
 
     </section>
 
   </main>
 
 
-  <!-- FOOTER -->
+  <!-- =========================
+       NEW JOB MODAL
+  ========================== -->
+
+  <div
+    id="jobModal"
+    class="modal"
+    hidden>
+
+    <div class="modal-card">
+
+      <div class="modal-header">
+
+        <div>
+
+          <p class="eyebrow green">
+            JOB ENTRY
+          </p>
+
+          <h2>
+            New Job
+          </h2>
+
+        </div>
+
+
+        <button
+          id="closeJobModal"
+          class="close-modal"
+          type="button">
+
+          ×
+
+        </button>
+
+      </div>
+
+
+      <form id="jobForm">
+
+
+        <!-- JOB NAME -->
+
+        <label>
+
+          Job Name
+
+          <input
+            id="newJobName"
+            type="text"
+            placeholder="Enter job name"
+            required>
+
+        </label>
+
+
+        <!-- AGENT -->
+
+        <label>
+
+          Agent
+
+          <select
+            id="newAgent"
+            required>
+
+            <option value="">
+              Select agent
+            </option>
+
+          </select>
+
+        </label>
+
+
+        <!-- TASK -->
+
+        <label>
+
+          Task Type
+
+          <select
+            id="newTaskType"
+            required>
+
+            <option value="">
+              Select task type
+            </option>
+
+          </select>
+
+        </label>
+
+
+        <!-- SESSION -->
+
+        <label>
+
+          Session
+
+          <select
+            id="newSession"
+            required>
+
+            <option value="">
+              Select session
+            </option>
+
+          </select>
+
+        </label>
+
+
+        <!-- SLICES -->
+
+        <label>
+
+          Number of Slices
+
+          <input
+            id="newSlices"
+            type="number"
+            min="0"
+            step="1"
+            placeholder="Enter number of slices"
+            required>
+
+        </label>
+
+
+        <!-- PRIORITY -->
+
+        <label>
+
+          Priority
+
+          <select
+            id="newPriority"
+            required>
+
+            <option value="Normal">
+              Normal
+            </option>
+
+            <option value="High">
+              High
+            </option>
+
+          </select>
+
+        </label>
+
+
+        <!-- MESSAGE -->
+
+        <div
+          id="jobFormMessage"
+          class="form-message">
+
+        </div>
+
+
+        <!-- BUTTONS -->
+
+        <div class="modal-actions">
+
+          <button
+            id="cancelJobBtn"
+            type="button"
+            class="cancel-btn">
+
+            Cancel
+
+          </button>
+
+
+          <button
+            type="submit"
+            class="save-job-btn">
+
+            Save Job
+
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================
+       FOOTER
+  ========================== -->
 
   <footer class="footer">
 
@@ -270,6 +572,7 @@
 
     </div>
 
+
     <span>
       2026
     </span>
@@ -280,4 +583,5 @@
   <script src="app.js"></script>
 
 </body>
+
 </html>
